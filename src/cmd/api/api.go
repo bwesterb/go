@@ -202,13 +202,18 @@ func Check(t *testing.T) {
 	if exitCode == 1 {
 		t.Errorf("API database problems found")
 	}
-	if !compareAPI(bw, features, required, optional, exception, false) {
+	if !compareAPI(bw, features, required, optional, exception, true) {
 		t.Errorf("API differences found")
 	}
 }
 
 // export emits the exported package features.
 func (w *Walker) export(pkg *apiPackage) {
+	// We ignore the Circl package as its API surface is so large.
+	if pkg.Path() == "circl" || strings.HasPrefix(pkg.Path(), "circl/") {
+		return
+	}
+
 	if verbose {
 		log.Println(pkg)
 	}
