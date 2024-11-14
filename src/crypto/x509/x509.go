@@ -49,6 +49,7 @@ import (
 	_ "crypto/sha256"
 	_ "crypto/sha512"
 
+	circlKem "github.com/cloudflare/circl/kem"
 	circlPki "github.com/cloudflare/circl/pki"
 	circlSign "github.com/cloudflare/circl/sign"
 
@@ -142,8 +143,20 @@ func marshalPublicKey(pub any) (publicKeyBytes []byte, publicKeyAlgorithm pkix.A
 		}
 		publicKeyBytes, _ = pub.MarshalBinary()
 		publicKeyAlgorithm.Algorithm = scheme.Oid()
+	case circlKem.PublicKey:
+		publicKeyBytes, _ = pub.MarshalBinary()
+		switch pub.Scheme().Name() {
+		case "ML-KEM-512":
+			publicKeyAlgorithm.Algorithm = oidMLKEM512
+		case "ML-KEM-768":
+			publicKeyAlgorithm.Algorithm = oidMLKEM768
+		case "ML-KEM-1024":
+			publicKeyAlgorithm.Algorithm = oidMLKEM1024
+		default:
+			return nil, pkix.AlgorithmIdentifier{}, fmt.Errorf("x509: 2: unsupported public key type: %T %s", pub, pub.Scheme().Name())
+		}
 	default:
-		return nil, pkix.AlgorithmIdentifier{}, fmt.Errorf("x509: unsupported public key type: %T", pub)
+		return nil, pkix.AlgorithmIdentifier{}, fmt.Errorf("x509: 1: unsupported public key type: %T", pub)
 	}
 
 	return publicKeyBytes, publicKeyAlgorithm, nil
@@ -243,6 +256,9 @@ const (
 	PureEd25519
 	PureEdDilithium2
 	PureEdDilithium3
+	PureMLDSA44
+	PureMLDSA65
+	PureMLDSA87
 )
 
 func (algo SignatureAlgorithm) isRSAPSS() bool {
@@ -273,6 +289,12 @@ const (
 	Ed25519
 	EdDilithium2
 	EdDilithium3
+	MLDSA44
+	MLDSA65
+	MLDSA87
+	MLKEM512
+	MLKEM768
+	MLKEM1024
 )
 
 var publicKeyAlgoName = [...]string{
@@ -282,6 +304,12 @@ var publicKeyAlgoName = [...]string{
 	Ed25519:      "Ed25519",
 	EdDilithium2: "Ed25519-Dilithium2",
 	EdDilithium3: "Ed448-Dilithium3",
+	MLDSA44:      "ML-DSA-44",
+	MLDSA65:      "ML-DSA-65",
+	MLDSA87:      "ML-DSA-87",
+	MLKEM512:     "ML-KEM-512",
+	MLKEM768:     "ML-KEM-768",
+	MLKEM1024:    "ML-KEM-1024",
 }
 
 func (algo PublicKeyAlgorithm) String() string {
@@ -499,6 +527,10 @@ var (
 	//	id-Ed25519   OBJECT IDENTIFIER ::= { 1 3 101 112 }
 	oidPublicKeyX25519  = asn1.ObjectIdentifier{1, 3, 101, 110}
 	oidPublicKeyEd25519 = asn1.ObjectIdentifier{1, 3, 101, 112}
+
+	oidMLKEM512  = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 4, 1}
+	oidMLKEM768  = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 4, 2}
+	oidMLKEM1024 = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 4, 3}
 )
 
 // getPublicKeyAlgorithmFromOID returns the exposed PublicKeyAlgorithm
@@ -514,6 +546,12 @@ func getPublicKeyAlgorithmFromOID(oid asn1.ObjectIdentifier) PublicKeyAlgorithm 
 		return ECDSA
 	case oid.Equal(oidPublicKeyEd25519):
 		return Ed25519
+	case oid.Equal(oidMLKEM512):
+		return MLKEM512
+	case oid.Equal(oidMLKEM768):
+		return MLKEM768
+	case oid.Equal(oidMLKEM1024):
+		return MLKEM1024
 	default:
 		scheme := circlPki.SchemeByOid(oid)
 		if scheme == nil {
@@ -1673,7 +1711,7 @@ func CreateCertificate(rand io.Reader, template, parent *Certificate, pub, priv 
 		return nil, err
 	}
 	if getPublicKeyAlgorithmFromOID(publicKeyAlgorithm.Algorithm) == UnknownPublicKeyAlgorithm {
-		return nil, fmt.Errorf("x509: unsupported public key type: %T", pub)
+		return nil, fmt.Errorf("x509: 3: unsupported public key type: %T", pub)
 	}
 
 	asn1Issuer, err := subjectBytes(parent)

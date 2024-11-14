@@ -1,4 +1,4 @@
-package common
+package dilithium
 
 // Zetas lists precomputed powers of the root of unity in Montgomery
 // representation used for the NTT:

@@ -1,5 +1,5 @@
-# github.com/cloudflare/circl v1.4.1-0.20240905130006-2d6cd9871f69
-## explicit; go 1.21
+# github.com/cloudflare/circl v1.5.1-0.20241104145250-a72f6ff9db9d
+## explicit; go 1.22.0
 github.com/cloudflare/circl/dh/x25519
 github.com/cloudflare/circl/dh/x448
 github.com/cloudflare/circl/ecc/goldilocks
@@ -8,11 +8,15 @@ github.com/cloudflare/circl/hpke
 github.com/cloudflare/circl/internal/conv
 github.com/cloudflare/circl/internal/sha3
 github.com/cloudflare/circl/kem
+github.com/cloudflare/circl/kem/frodo/frodo640shake
 github.com/cloudflare/circl/kem/hybrid
 github.com/cloudflare/circl/kem/kyber/kyber1024
 github.com/cloudflare/circl/kem/kyber/kyber512
 github.com/cloudflare/circl/kem/kyber/kyber768
+github.com/cloudflare/circl/kem/mlkem/mlkem1024
+github.com/cloudflare/circl/kem/mlkem/mlkem512
 github.com/cloudflare/circl/kem/mlkem/mlkem768
+github.com/cloudflare/circl/kem/schemes
 github.com/cloudflare/circl/math
 github.com/cloudflare/circl/math/fp25519
 github.com/cloudflare/circl/math/fp448
@@ -27,16 +31,24 @@ github.com/cloudflare/circl/pke/kyber/kyber768
 github.com/cloudflare/circl/pke/kyber/kyber768/internal
 github.com/cloudflare/circl/pki
 github.com/cloudflare/circl/sign
-github.com/cloudflare/circl/sign/dilithium/internal/common
-github.com/cloudflare/circl/sign/dilithium/internal/common/params
 github.com/cloudflare/circl/sign/dilithium/mode2
 github.com/cloudflare/circl/sign/dilithium/mode2/internal
 github.com/cloudflare/circl/sign/dilithium/mode3
 github.com/cloudflare/circl/sign/dilithium/mode3/internal
+github.com/cloudflare/circl/sign/dilithium/mode5
+github.com/cloudflare/circl/sign/dilithium/mode5/internal
 github.com/cloudflare/circl/sign/ed25519
 github.com/cloudflare/circl/sign/ed448
 github.com/cloudflare/circl/sign/eddilithium2
 github.com/cloudflare/circl/sign/eddilithium3
+github.com/cloudflare/circl/sign/internal/dilithium
+github.com/cloudflare/circl/sign/internal/dilithium/params
+github.com/cloudflare/circl/sign/mldsa/mldsa44
+github.com/cloudflare/circl/sign/mldsa/mldsa44/internal
+github.com/cloudflare/circl/sign/mldsa/mldsa65
+github.com/cloudflare/circl/sign/mldsa/mldsa65/internal
+github.com/cloudflare/circl/sign/mldsa/mldsa87
+github.com/cloudflare/circl/sign/mldsa/mldsa87/internal
 github.com/cloudflare/circl/sign/schemes
 github.com/cloudflare/circl/simd/keccakf1600
 github.com/cloudflare/circl/xof

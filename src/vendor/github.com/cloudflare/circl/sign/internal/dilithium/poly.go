@@ -1,4 +1,4 @@
-package common
+package dilithium
 
 // An element of our base ring R which are polynomials over Z_q modulo
 // the equation Xᴺ = -1, where q=2²³ - 2¹³ + 1 and N=256.

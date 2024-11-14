@@ -1,7 +1,11 @@
-//go:build !amd64 || purego
-// +build !amd64 purego
+//go:build amd64 && !purego
+// +build amd64,!purego
 
-package common
+package dilithium
+
+import (
+	"golang.org/x/sys/cpu"
+)
 
 // Execute an in-place forward NTT on as.
 //
@@ -9,7 +13,13 @@ package common
 // by 2*Q.  The resulting coefficients are again in Montgomery representation,
 // but are only bounded bt 18*Q.
 func (p *Poly) NTT() {
-	p.nttGeneric()
+	if cpu.X86.HasAVX2 {
+		nttAVX2(
+			(*[N]uint32)(p),
+		)
+	} else {
+		p.nttGeneric()
+	}
 }
 
 // Execute an in-place inverse NTT and multiply by Montgomery factor R
@@ -18,7 +28,13 @@ func (p *Poly) NTT() {
 // by 2*Q.  The resulting coefficients are again in Montgomery representation
 // and bounded by 2*Q.
 func (p *Poly) InvNTT() {
-	p.invNttGeneric()
+	if cpu.X86.HasAVX2 {
+		invNttAVX2(
+			(*[N]uint32)(p),
+		)
+	} else {
+		p.invNttGeneric()
+	}
 }
 
 // Sets p to the polynomial whose coefficients are the pointwise multiplication
@@ -27,12 +43,28 @@ func (p *Poly) InvNTT() {
 // Assumes a and b are in Montgomery form and that the pointwise product
 // of each coefficient is below 2³² q.
 func (p *Poly) MulHat(a, b *Poly) {
-	p.mulHatGeneric(a, b)
+	if cpu.X86.HasAVX2 {
+		mulHatAVX2(
+			(*[N]uint32)(p),
+			(*[N]uint32)(a),
+			(*[N]uint32)(b),
+		)
+	} else {
+		p.mulHatGeneric(a, b)
+	}
 }
 
 // Sets p to a + b.  Does not normalize polynomials.
 func (p *Poly) Add(a, b *Poly) {
-	p.addGeneric(a, b)
+	if cpu.X86.HasAVX2 {
+		addAVX2(
+			(*[N]uint32)(p),
+			(*[N]uint32)(a),
+			(*[N]uint32)(b),
+		)
+	} else {
+		p.addGeneric(a, b)
+	}
 }
 
 // Sets p to a - b.
@@ -40,29 +72,60 @@ func (p *Poly) Add(a, b *Poly) {
 // Warning: assumes coefficients of b are less than 2q.
 // Sets p to a + b.  Does not normalize polynomials.
 func (p *Poly) Sub(a, b *Poly) {
-	p.subGeneric(a, b)
+	if cpu.X86.HasAVX2 {
+		subAVX2(
+			(*[N]uint32)(p),
+			(*[N]uint32)(a),
+			(*[N]uint32)(b),
+		)
+	} else {
+		p.subGeneric(a, b)
+	}
 }
 
 // Writes p whose coefficients are in [0, 16) to buf, which must be of
 // length N/2.
 func (p *Poly) PackLe16(buf []byte) {
-	p.packLe16Generic(buf)
+	if cpu.X86.HasAVX2 {
+		if len(buf) < PolyLe16Size {
+			panic("buf too small")
+		}
+		packLe16AVX2(
+			(*[N]uint32)(p),
+			&buf[0],
+		)
+	} else {
+		p.packLe16Generic(buf)
+	}
 }
 
 // Reduces each of the coefficients to <2q.
 func (p *Poly) ReduceLe2Q() {
-	p.reduceLe2QGeneric()
+	if cpu.X86.HasAVX2 {
+		reduceLe2QAVX2((*[N]uint32)(p))
+	} else {
+		p.reduceLe2QGeneric()
+	}
 }
 
 // Reduce each of the coefficients to <q.
 func (p *Poly) Normalize() {
-	p.normalizeGeneric()
+	if cpu.X86.HasAVX2 {
+		p.ReduceLe2Q()
+		p.NormalizeAssumingLe2Q()
+	} else {
+		p.normalizeGeneric()
+	}
 }
 
 // Normalize the coefficients in this polynomial assuming they are already
 // bounded by 2q.
 func (p *Poly) NormalizeAssumingLe2Q() {
-	p.normalizeAssumingLe2QGeneric()
+	if cpu.X86.HasAVX2 {
+		le2qModQAVX2((*[N]uint32)(p))
+	} else {
+		p.normalizeAssumingLe2QGeneric()
+	}
 }
 
 // Checks whether the "supnorm" (see sec 2.1 of the spec) of p is equal
@@ -70,6 +133,9 @@ func (p *Poly) NormalizeAssumingLe2Q() {
 //
 // Requires the coefficients of p to be normalized.
 func (p *Poly) Exceeds(bound uint32) bool {
+	if cpu.X86.HasAVX2 {
+		return exceedsAVX2((*[N]uint32)(p), bound) == 1
+	}
 	return p.exceedsGeneric(bound)
 }
 
@@ -77,5 +143,12 @@ func (p *Poly) Exceeds(bound uint32) bool {
 //
 // So it requires the coefficients of p  to be less than 2³²⁻ᴰ.
 func (p *Poly) MulBy2toD(q *Poly) {
-	p.mulBy2toDGeneric(q)
+	if cpu.X86.HasAVX2 {
+		mulBy2toDAVX2(
+			(*[N]uint32)(p),
+			(*[N]uint32)(q),
+		)
+	} else {
+		p.mulBy2toDGeneric(q)
+	}
 }

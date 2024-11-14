@@ -1,7 +1,7 @@
-package common
+package dilithium
 
 import (
-	"github.com/cloudflare/circl/sign/dilithium/internal/common/params"
+	"github.com/cloudflare/circl/sign/internal/dilithium/params"
 )
 
 const (

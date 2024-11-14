@@ -1,4 +1,4 @@
-package common
+package dilithium
 
 // Sets p to the polynomial whose coefficients are less than 1024 encoded
 // into buf (which must be of size PolyT1Size).

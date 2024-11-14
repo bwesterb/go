@@ -1,4 +1,4 @@
-package common
+package dilithium
 
 // Returns a y with y < 2q and y = x mod q.
 // Note that in general *not*: ReduceLe2Q(ReduceLe2Q(x)) == x.
