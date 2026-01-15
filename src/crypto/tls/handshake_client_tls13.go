@@ -607,6 +607,10 @@ func (hs *clientHandshakeStateTLS13) readServerParameters() error {
 		}
 	}
 
+	if encryptedExtensions.trustAnchorIdentifiers != nil {
+		c.trustAnchorIdentifiers = encryptedExtensions.trustAnchorIdentifiers
+	}
+
 	return nil
 }
 

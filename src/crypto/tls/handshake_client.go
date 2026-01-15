@@ -180,6 +180,8 @@ func (c *Conn) makeClientHello() (*clientHelloMsg, *keySharePrivateKeys, *echCli
 			}
 			hello.keyShares = []keyShare{{group: curveID, data: keyShareKeys.ecdhe.PublicKey().Bytes()}}
 		}
+
+		hello.trustAnchorIdentifiers = config.TrustAnchorIdentifiers
 	}
 
 	if c.quic != nil {

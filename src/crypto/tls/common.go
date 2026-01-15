@@ -128,6 +128,7 @@ const (
 	extensionRenegotiationInfo       uint16 = 0xff01
 	extensionECHOuterExtensions      uint16 = 0xfd00
 	extensionEncryptedClientHello    uint16 = 0xfe0d
+	extensionTrustAnchors            uint16 = 0xca34
 )
 
 // TLS signaling cipher suite values
@@ -251,6 +252,12 @@ type ConnectionState struct {
 	// refers to elliptic curves for legacy reasons, see [CurveID]. If a legacy
 	// RSA key exchange is used, this value is zero.
 	CurveID CurveID
+
+	// TrustAnchorIdentifiers contains the list of trust anchor identifiers
+	// sent by the peer. Clients send identifiers for anchors they'd accept,
+	// and servers send identifiers for anchors for which they have certificates
+	// provisioned.
+	TrustAnchorIdentifiers []TrustAnchorIdentifier
 
 	// NegotiatedProtocol is the application protocol negotiated with ALPN.
 	NegotiatedProtocol string
@@ -784,6 +791,9 @@ type Config struct {
 	// or use the GODEBUG=tlsmlkem=0 environment variable.
 	CurvePreferences []CurveID
 
+	// If provided, clients will send these TrustAnchorIdentifier to the server.
+	TrustAnchorIdentifiers []TrustAnchorIdentifier
+
 	// DynamicRecordSizingDisabled disables adaptive sizing of TLS records.
 	// When true, the largest possible TLS record size is always used. When
 	// false, the size of TLS records may be adjusted in an attempt to
@@ -978,6 +988,7 @@ func (c *Config) Clone() *Config {
 		DynamicRecordSizingDisabled:         c.DynamicRecordSizingDisabled,
 		Renegotiation:                       c.Renegotiation,
 		KeyLogWriter:                        c.KeyLogWriter,
+		TrustAnchorIdentifiers:              c.TrustAnchorIdentifiers,
 		EncryptedClientHelloConfigList:      c.EncryptedClientHelloConfigList,
 		EncryptedClientHelloRejectionVerify: c.EncryptedClientHelloRejectionVerify,
 		EncryptedClientHelloKeys:            c.EncryptedClientHelloKeys,

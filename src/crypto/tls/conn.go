@@ -71,6 +71,9 @@ type Conn struct {
 	resumptionSecret []byte
 	echAccepted      bool
 
+	// TrustAnchorIdentifier sent by peer
+	trustAnchorIdentifiers []TrustAnchorIdentifier
+
 	// ticketKeys is the set of active session ticket keys for this
 	// connection. The first one is used to encrypt new tickets and
 	// all are tried to decrypt tickets.
@@ -1639,6 +1642,7 @@ func (c *Conn) connectionStateLocked() ConnectionState {
 	state.PeerCertificates = c.peerCertificates
 	state.VerifiedChains = c.verifiedChains
 	state.SignedCertificateTimestamps = c.scts
+	state.TrustAnchorIdentifiers = c.trustAnchorIdentifiers
 	state.OCSPResponse = c.ocspResponse
 	if (!c.didResume || c.extMasterSecret) && c.vers != VersionTLS13 {
 		if c.clientFinishedIsFirst {

@@ -296,6 +296,10 @@ func (hs *serverHandshakeStateTLS13) processClientHello() error {
 		hs.hello.serverShare.data = append(ciphertext, hs.hello.serverShare.data...)
 	}
 
+	if hs.clientHello.trustAnchorIdentifiers != nil {
+		c.trustAnchorIdentifiers = hs.clientHello.trustAnchorIdentifiers
+	}
+
 	selectedProto, err := negotiateALPN(c.config.NextProtos, hs.clientHello.alpnProtocols, c.quic != nil)
 	if err != nil {
 		c.sendAlert(alertNoApplicationProtocol)
@@ -821,6 +825,14 @@ func (hs *serverHandshakeStateTLS13) sendServerParameters() error {
 		if err != nil {
 			c.sendAlert(alertInternalError)
 			return err
+		}
+	}
+
+	if c.trustAnchorIdentifiers != nil {
+		if c.config.TrustAnchorIdentifiers != nil {
+			encryptedExtensions.trustAnchorIdentifiers = c.config.TrustAnchorIdentifiers
+		} else {
+			encryptedExtensions.trustAnchorIdentifiers = []TrustAnchorIdentifier{}
 		}
 	}
 

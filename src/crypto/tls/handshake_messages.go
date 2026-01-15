@@ -97,6 +97,7 @@ type clientHelloMsg struct {
 	pskBinders                       [][]byte
 	quicTransportParameters          []byte
 	encryptedClientHello             []byte
+	trustAnchorIdentifiers           []TrustAnchorIdentifier
 	// extensions are only populated on the server-side of a handshake
 	extensions []uint16
 }
@@ -293,6 +294,12 @@ func (m *clientHelloMsg) marshalMsg(echInner bool) ([]byte, error) {
 				})
 			})
 		}
+	}
+	if m.trustAnchorIdentifiers != nil {
+		exts.AddUint16(extensionTrustAnchors)
+		exts.AddUint16LengthPrefixed(func(exts *cryptobyte.Builder) {
+			marshalTrustAnchorIDList(exts, m.trustAnchorIdentifiers)
+		})
 	}
 	if len(m.pskModes) > 0 {
 		// RFC 8446, Section 4.2.9
@@ -619,6 +626,12 @@ func (m *clientHelloMsg) unmarshal(data []byte) bool {
 				}
 				m.keyShares = append(m.keyShares, ks)
 			}
+		case extensionTrustAnchors:
+			ids := unmarshalTrustAnchorIDList(&extData)
+			if ids == nil || !extData.Empty() {
+				return false
+			}
+			m.trustAnchorIdentifiers = ids
 		case extensionEarlyData:
 			// RFC 8446, Section 4.2.10
 			m.earlyData = true
@@ -713,6 +726,7 @@ func (m *clientHelloMsg) clone() *clientHelloMsg {
 		pskBinders:                       slices.Clone(m.pskBinders),
 		quicTransportParameters:          slices.Clone(m.quicTransportParameters),
 		encryptedClientHello:             slices.Clone(m.encryptedClientHello),
+		trustAnchorIdentifiers:           slices.Clone(m.trustAnchorIdentifiers),
 	}
 }
 
@@ -1006,6 +1020,7 @@ type encryptedExtensionsMsg struct {
 	earlyData               bool
 	echRetryConfigs         []byte
 	serverNameAck           bool
+	trustAnchorIdentifiers  []TrustAnchorIdentifier
 }
 
 func (m *encryptedExtensionsMsg) marshal() ([]byte, error) {
@@ -1044,6 +1059,12 @@ func (m *encryptedExtensionsMsg) marshal() ([]byte, error) {
 			if m.serverNameAck {
 				b.AddUint16(extensionServerName)
 				b.AddUint16(0) // empty extension_data
+			}
+			if m.trustAnchorIdentifiers != nil {
+				b.AddUint16(extensionTrustAnchors)
+				b.AddUint16LengthPrefixed(func(b *cryptobyte.Builder) {
+					marshalTrustAnchorIDList(b, m.trustAnchorIdentifiers)
+				})
 			}
 		})
 	})
@@ -1105,6 +1126,12 @@ func (m *encryptedExtensionsMsg) unmarshal(data []byte) bool {
 				return false
 			}
 			m.serverNameAck = true
+		case extensionTrustAnchors:
+			ids := unmarshalTrustAnchorIDList(&extData)
+			if ids == nil || !extData.Empty() {
+				return false
+			}
+			m.trustAnchorIdentifiers = ids
 		default:
 			// Ignore unknown extensions.
 			continue
